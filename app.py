@@ -444,11 +444,14 @@ def init_db():
         print("Database initialized successfully!")
 
 
-if __name__ == '__main__':
-    # Initialize database
-    init_db()
+# Initialize database tables on startup (works in both dev and production)
+with app.app_context():
+    db.create_all()
+    print("Database tables created/verified!")
 
-    # Run the app
+
+if __name__ == '__main__':
+    # Run the app (only for local development)
     print("=" * 50)
     print("PDF Toolkit SaaS is starting...")
     print("=" * 50)
