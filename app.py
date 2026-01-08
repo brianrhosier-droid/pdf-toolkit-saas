@@ -27,6 +27,12 @@ stripe.api_key = app.config['STRIPE_SECRET_KEY']
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 
+# Make datetime available to all templates
+@app.context_processor
+def inject_now():
+    return {'now': datetime.utcnow}
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
