@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - PDF Toolkit{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="container">
+        <div class="dashboard-header">
+            <h1>Dashboard</h1>
+            <p>Welcome back, {{ user.email }}</p>
+        </div>
+
+        <div class="usage-stats">
+            <div class="stat-card">
+                <h3>Current Plan</h3>
+                <p class="stat-value">{{ user.subscription_tier|upper }}</p>
+            </div>
+            <div class="stat-card">
+                <h3>Usage This Month</h3>
+                <p class="stat-value">{{ user.usage_count }} / {{ user.get_usage_limit() }}</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ (user.usage_count / user.get_usage_limit() * 100)|int }}%"></div>
+                </div>
+            </div>
+            {% if user.subscription_tier == 'free' %}
+            <div class="stat-card upgrade-prompt">
+                <h3>Need More?</h3>
+                <p>Upgrade to get unlimited access</p>
+                <a href="{{ url_for('pricing') }}" class="btn btn-primary btn-sm">Upgrade Now</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="tools-section">
+            <h2>PDF Tools</h2>
+            <div class="tool-grid">
+                <a href="{{ url_for('merge_pdfs') }}" class="tool-card">
+                    <div class="tool-icon">🔗</div>
+                    <h3>Merge PDFs</h3>
+                    <p>Combine multiple files</p>
+                </a>
+                <a href="{{ url_for('split_pdf') }}" class="tool-card">
+                    <div class="tool-icon">✂️</div>
+                    <h3>Split PDF</h3>
+                    <p>Extract pages</p>
+                </a>
+                <a href="{{ url_for('compress_pdf') }}" class="tool-card">
+                    <div class="tool-icon">📦</div>
+                    <h3>Compress PDF</h3>
+                    <p>Reduce file size</p>
+                </a>
+                <a href="{{ url_for('convert_to_pdf') }}" class="tool-card">
+                    <div class="tool-icon">🖼️</div>
+                    <h3>Convert to PDF</h3>
+                    <p>Images to PDF</p>
+                </a>
+            </div>
+        </div>
+
+        {% if operations %}
+        <div class="recent-activity">
+            <h2>Recent Activity</h2>
+            <table class="activity-table">
+                <thead>
+                    <tr>
+                        <th>Operation</th>
+                        <th>Files</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for op in operations %}
+                    <tr>
+                        <td>{{ op.operation_type|capitalize }}</td>
+                        <td>{{ op.file_count }}</td>
+                        <td>{{ op.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td><span class="status-badge status-{{ 'success' if op.success else 'error' }}">{{ 'Success' if op.success else 'Failed' }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

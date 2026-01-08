@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero">
+    <div class="container">
+        <h1>Professional PDF Tools for Everyone</h1>
+        <p class="subtitle">Merge, split, compress, and convert PDFs with ease. No software installation required.</p>
+        <div class="cta-buttons">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+            {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-primary">Get Started Free</a>
+                <a href="{{ url_for('login') }}" class="btn btn-secondary">Login</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="features">
+    <div class="container">
+        <h2>Powerful PDF Tools</h2>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🔗</div>
+                <h3>Merge PDFs</h3>
+                <p>Combine multiple PDF files into a single document with ease.</p>
+                <a href="{{ url_for('merge_pdfs') }}" class="btn-link">Try Now →</a>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">✂️</div>
+                <h3>Split PDFs</h3>
+                <p>Extract pages or split your PDF into separate files.</p>
+                <a href="{{ url_for('split_pdf') }}" class="btn-link">Try Now →</a>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📦</div>
+                <h3>Compress PDFs</h3>
+                <p>Reduce file size without losing quality.</p>
+                <a href="{{ url_for('compress_pdf') }}" class="btn-link">Try Now →</a>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🖼️</div>
+                <h3>Convert to PDF</h3>
+                <p>Convert images (JPG, PNG) to PDF format.</p>
+                <a href="{{ url_for('convert_to_pdf') }}" class="btn-link">Try Now →</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="pricing-preview">
+    <div class="container">
+        <h2>Simple, Transparent Pricing</h2>
+        <p>Start free, upgrade when you need more.</p>
+        <a href="{{ url_for('pricing') }}" class="btn btn-primary">View Plans</a>
+    </div>
+</div>
+{% endblock %}

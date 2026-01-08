@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Convert to PDF - PDF Toolkit{% endblock %}
+
+{% block content %}
+<div class="tool-page">
+    <div class="container">
+        <div class="tool-header">
+            <h1>🖼️ Convert to PDF</h1>
+            <p>Convert images (JPG, PNG) to PDF format</p>
+        </div>
+
+        <div class="usage-indicator">
+            <p>Usage: {{ user.usage_count }} / {{ user.get_usage_limit() }} this month</p>
+        </div>
+
+        <div class="tool-container">
+            <form id="convertForm" enctype="multipart/form-data">
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">🖼️</div>
+                    <p>Drag & drop image files here or click to browse</p>
+                    <input type="file" id="fileInput" name="files" multiple accept=".jpg,.jpeg,.png" style="display:none;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">Select Images</button>
+                </div>
+
+                <div id="fileList" class="file-list"></div>
+
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" disabled>
+                    Convert to PDF
+                </button>
+            </form>
+
+            <div id="result" class="result-message"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+const fileList = document.getElementById('fileList');
+const submitBtn = document.getElementById('submitBtn');
+const convertForm = document.getElementById('convertForm');
+const resultDiv = document.getElementById('result');
+
+let selectedFiles = [];
+
+uploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadZone.classList.add('dragover');
+});
+
+uploadZone.addEventListener('dragleave', () => {
+    uploadZone.classList.remove('dragover');
+});
+
+uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    handleFiles(e.dataTransfer.files);
+});
+
+fileInput.addEventListener('change', (e) => {
+    handleFiles(e.target.files);
+});
+
+function handleFiles(files) {
+    selectedFiles = Array.from(files).filter(f =>
+        f.type === 'image/png' || f.type === 'image/jpeg' || f.type === 'image/jpg'
+    );
+    displayFiles();
+}
+
+function displayFiles() {
+    fileList.innerHTML = '';
+    if (selectedFiles.length === 0) {
+        submitBtn.disabled = true;
+        return;
+    }
+
+    selectedFiles.forEach((file, index) => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.innerHTML = `
+            <span>${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+            <button type="button" onclick="removeFile(${index})">✕</button>
+        `;
+        fileList.appendChild(fileItem);
+    });
+
+    submitBtn.disabled = false;
+}
+
+function removeFile(index) {
+    selectedFiles.splice(index, 1);
+    displayFiles();
+}
+
+convertForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (selectedFiles.length === 0) {
+        alert('Please select at least one image file');
+        return;
+    }
+
+    const formData = new FormData();
+    selectedFiles.forEach(file => formData.append('files', file));
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Converting...';
+    resultDiv.innerHTML = '<p class="info">Processing your images...</p>';
+
+    try {
+        const response = await fetch('{{ url_for("convert_to_pdf") }}', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'converted.pdf';
+            a.click();
+            window.URL.revokeObjectURL(url);
+
+            resultDiv.innerHTML = '<p class="success">Images converted to PDF successfully! Download started.</p>';
+            selectedFiles = [];
+            displayFiles();
+        } else {
+            const error = await response.json();
+            resultDiv.innerHTML = `<p class="error">${error.error}</p>`;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Convert to PDF';
+    }
+});
+</script>
+{% endblock %}

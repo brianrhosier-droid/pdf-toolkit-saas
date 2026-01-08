@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - PDF Toolkit{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Users</h3>
+                <p class="stat-value">{{ stats.total_users }}</p>
+            </div>
+            <div class="stat-card">
+                <h3>Paid Users</h3>
+                <p class="stat-value">{{ stats.paid_users }}</p>
+            </div>
+            <div class="stat-card">
+                <h3>Total Operations</h3>
+                <p class="stat-value">{{ stats.total_operations }}</p>
+            </div>
+            <div class="stat-card">
+                <h3>Conversion Rate</h3>
+                <p class="stat-value">{{ ((stats.paid_users / stats.total_users * 100) if stats.total_users > 0 else 0)|round(1) }}%</p>
+            </div>
+        </div>
+
+        <div class="recent-operations">
+            <h2>Recent Operations</h2>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User ID</th>
+                        <th>Operation</th>
+                        <th>Files</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for op in stats.operations %}
+                    <tr>
+                        <td>{{ op.id }}</td>
+                        <td>{{ op.user_id }}</td>
+                        <td>{{ op.operation_type }}</td>
+                        <td>{{ op.file_count }}</td>
+                        <td>{{ op.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td><span class="status-badge status-{{ 'success' if op.success else 'error' }}">{{ 'Success' if op.success else 'Failed' }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

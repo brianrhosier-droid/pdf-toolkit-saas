@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Compress PDF - PDF Toolkit{% endblock %}
+
+{% block content %}
+<div class="tool-page">
+    <div class="container">
+        <div class="tool-header">
+            <h1>📦 Compress PDF</h1>
+            <p>Reduce PDF file size without losing quality</p>
+        </div>
+
+        <div class="usage-indicator">
+            <p>Usage: {{ user.usage_count }} / {{ user.get_usage_limit() }} this month</p>
+        </div>
+
+        <div class="tool-container">
+            <form id="compressForm" enctype="multipart/form-data">
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">📁</div>
+                    <p>Drag & drop a PDF file here or click to browse</p>
+                    <input type="file" id="fileInput" name="file" accept=".pdf" style="display:none;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">Select File</button>
+                </div>
+
+                <div id="fileInfo" class="file-info"></div>
+
+                <div class="form-group">
+                    <label>Compression Quality</label>
+                    <select name="quality" id="quality">
+                        <option value="low">Maximum Compression (Low Quality)</option>
+                        <option value="medium" selected>Balanced (Medium Quality)</option>
+                        <option value="high">Minimal Compression (High Quality)</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" disabled>
+                    Compress PDF
+                </button>
+            </form>
+
+            <div id="result" class="result-message"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+const fileInfo = document.getElementById('fileInfo');
+const submitBtn = document.getElementById('submitBtn');
+const compressForm = document.getElementById('compressForm');
+const resultDiv = document.getElementById('result');
+
+let selectedFile = null;
+
+uploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadZone.classList.add('dragover');
+});
+
+uploadZone.addEventListener('dragleave', () => {
+    uploadZone.classList.remove('dragover');
+});
+
+uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    if (e.dataTransfer.files[0]?.type === 'application/pdf') {
+        handleFile(e.dataTransfer.files[0]);
+    }
+});
+
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files[0]) {
+        handleFile(e.target.files[0]);
+    }
+});
+
+function handleFile(file) {
+    selectedFile = file;
+    fileInfo.innerHTML = `
+        <div class="file-item">
+            <span>${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+        </div>
+    `;
+    submitBtn.disabled = false;
+}
+
+compressForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (!selectedFile) {
+        alert('Please select a PDF file');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('quality', document.getElementById('quality').value);
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Compressing...';
+    resultDiv.innerHTML = '<p class="info">Processing your file...</p>';
+
+    try {
+        const response = await fetch('{{ url_for("compress_pdf") }}', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'compressed.pdf';
+            a.click();
+            window.URL.revokeObjectURL(url);
+
+            const originalSize = selectedFile.size;
+            const compressedSize = blob.size;
+            const reduction = ((1 - compressedSize / originalSize) * 100).toFixed(1);
+
+            resultDiv.innerHTML = `<p class="success">PDF compressed successfully! File size reduced by ${reduction}%. Download started.</p>`;
+        } else {
+            const error = await response.json();
+            resultDiv.innerHTML = `<p class="error">${error.error}</p>`;
+        }
+    } catch (error) {
+        resultDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Compress PDF';
+    }
+});
+</script>
+{% endblock %}
